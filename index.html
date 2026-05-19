@@ -138,7 +138,10 @@
               <input type="hidden" name="source_page" value="Korean Name Studio">
               <input type="hidden" name="selected_name" id="selectedNameField" value="">
               <input type="hidden" name="romanization" id="selectedRomanField" value="">
-              <input type="hidden" name="share_card_data_url" id="shareCardDataField" value="">
+              <input type="hidden" name="wanted_style" id="wantedStyleField" value="">
+              <input type="hidden" name="name_vibe" id="nameVibeField" value="">
+              <input type="hidden" name="image_type" id="imageTypeField" value="">
+              <input type="hidden" name="gender_energy" id="genderEnergyField" value="">
               <input type="checkbox" name="botcheck" style="display:none">
 
               <label for="subscriberEmail"><strong>Get this share card by email</strong></label>
@@ -212,7 +215,10 @@
     const cardRoman = document.getElementById('cardRoman');
     const selectedNameField = document.getElementById('selectedNameField');
     const selectedRomanField = document.getElementById('selectedRomanField');
-    const shareCardDataField = document.getElementById('shareCardDataField');
+    const wantedStyleField = document.getElementById('wantedStyleField');
+    const nameVibeField = document.getElementById('nameVibeField');
+    const imageTypeField = document.getElementById('imageTypeField');
+    const genderEnergyField = document.getElementById('genderEnergyField');
     const emailCaptureForm = document.getElementById('emailCaptureForm');
     const emailSubmitBtn = document.getElementById('emailSubmitBtn');
     const emailStatus = document.getElementById('emailStatus');
@@ -302,6 +308,10 @@
       cultureNote.textContent = `This result uses ${item.surname.hangul} (${item.surname.roman}) as the family name and ${item.given} as the fixed two-syllable given name. The attached list is used as the main source of first-name variety.`;
       cardName.textContent = item.hangulFull;
       cardRoman.textContent = item.romanFull;
+      wantedStyleField.value = styleLabel[getSelected('style')];
+      nameVibeField.value = vibeLabel[getSelected('vibe')];
+      imageTypeField.value = imageLabel[getSelected('image')];
+      genderEnergyField.value = energyLabel[getSelected('energy')];
     }
     function setThemeIcon(){
       themeBtn.innerHTML = currentTheme === 'dark' ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>' : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
@@ -329,8 +339,7 @@
       const lines=[`${item.first.hangul} — ${item.first.meaning}`,`${item.second.hangul} — ${item.second.meaning}`,item.summary];
       let y=720; lines.forEach((line,idx)=>{wrapText(line,760,idx===2?'500 30px Inter':'500 28px Inter').forEach(seg=>{ctx.fillText(seg,130,y); y+=44;}); y+=18;});
       ctx.fillStyle='rgba(0,0,0,0.08)'; roundRect(ctx,130,862,820,92,28); ctx.fill(); ctx.fillStyle=theme.ink; ctx.font='700 24px Inter'; ctx.fillText('Family name + exact 2-syllable given name',160,918);
-      const dataUrl = shareCanvas.toDataURL('image/png');
-      cardHeadline.textContent='Your Korean-style name'; cardName.textContent=item.hangulFull; cardRoman.textContent=item.romanFull; selectedNameField.value=item.hangulFull; selectedRomanField.value=item.romanFull; shareCardDataField.value=dataUrl;
+      cardHeadline.textContent='Your Korean-style name'; cardName.textContent=item.hangulFull; cardRoman.textContent=item.romanFull; selectedNameField.value=item.hangulFull; selectedRomanField.value=item.romanFull;
     }
     function generate(shuffle=false){ results = buildResults(shuffle); activeIndex = 0; renderRecommendations(); renderSelected(); renderShareCard(); }
     function setDownloadEnabled(enabled){
@@ -363,7 +372,10 @@
       formData.set('to', CONTACT_EMAIL);
       formData.set('selected_name', selectedNameField.value);
       formData.set('romanization', selectedRomanField.value);
-      formData.set('share_card_data_url', shareCardDataField.value);
+      formData.set('wanted_style', wantedStyleField.value);
+      formData.set('name_vibe', nameVibeField.value);
+      formData.set('image_type', imageTypeField.value);
+      formData.set('gender_energy', genderEnergyField.value);
 
       try {
         const response = await fetch('https://api.web3forms.com/submit', {
@@ -378,7 +390,10 @@
           emailCaptureForm.reset();
           selectedNameField.value = cardName.textContent;
           selectedRomanField.value = cardRoman.textContent;
-          shareCardDataField.value = shareCanvas.toDataURL('image/png');
+          wantedStyleField.value = styleLabel[getSelected('style')];
+          nameVibeField.value = vibeLabel[getSelected('vibe')];
+          imageTypeField.value = imageLabel[getSelected('image')];
+          genderEnergyField.value = energyLabel[getSelected('energy')];
         } else {
           throw new Error(result.message || 'Submission failed.');
         }
