@@ -128,7 +128,7 @@
           <section class="share-panel card">
             <div><span class="badge">Preview</span><h3 style="margin-top:var(--space-3)">Square social card</h3></div>
             <div class="share-canvas-wrap"><canvas id="shareCanvas" class="share-canvas" width="1080" height="1080" aria-label="Share card preview"></canvas></div>
-            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button></div>
+            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG (disabled)</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button></div>
 
             <form class="card email-capture-form" id="emailCaptureForm" action="https://api.web3forms.com/submit" method="POST">
               <input type="hidden" name="access_key" value="7c9b8409-0c4b-4563-a654-0bfa4287535c">
@@ -338,7 +338,7 @@
       downloadCardBtn.setAttribute('aria-disabled', String(!enabled));
       downloadCardBtn.style.opacity = enabled ? '1' : '.45';
       downloadCardBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-      downloadCardBtn.textContent = enabled ? 'Download PNG' : 'Download PNG';
+      downloadCardBtn.textContent = enabled ? 'Download PNG' : 'Download PNG (disabled)';
     }
     function downloadCanvas(){ if(downloadCardBtn.disabled) return; const a=document.createElement('a'); a.href=shareCanvas.toDataURL('image/png'); a.download='korean-name-share-card.png'; a.click(); }
     function setEmailStatus(message, type){ emailStatus.textContent = message; emailStatus.className = `status-message show ${type === 'success' ? 'status-success' : 'status-error'}`; }
@@ -346,7 +346,12 @@
     emailCaptureForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       emailStatus.className = 'status-message';
-      setDownloadEnabled(true);
+      const emailValue = (document.getElementById('subscriberEmail').value || '').trim();
+      if (!emailValue) {
+        setDownloadEnabled(false);
+        setEmailStatus('Please enter your email first.', 'error');
+        return;
+      }
       const originalLabel = emailSubmitBtn.textContent;
       emailSubmitBtn.disabled = true;
       emailSubmitBtn.textContent = 'Sending...';
@@ -391,7 +396,7 @@
     shuffleBtn.addEventListener('click',()=>generate(true));
     downloadCardBtn.addEventListener('click',downloadCanvas);
     refreshCardBtn.addEventListener('click',renderShareCard);
-    setDownloadEnabled(true);
+    setDownloadEnabled(false);
     setThemeIcon(); renderThemeButtons(); generate(false);
   </script>
 </body>
