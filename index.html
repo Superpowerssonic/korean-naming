@@ -128,7 +128,7 @@
           <section class="share-panel card">
             <div><span class="badge">Preview</span><h3 style="margin-top:var(--space-3)">Square social card</h3></div>
             <div class="share-canvas-wrap"><canvas id="shareCanvas" class="share-canvas" width="1080" height="1080" aria-label="Share card preview"></canvas></div>
-            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG (disabled)</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button></div>
+            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG (disabled)</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button><button class="btn btn-secondary" type="button" id="shareLinkBtn">Share result link</button></div><div id="shareStatus" class="status-message" aria-live="polite"></div><div class="helper" id="shareCopyText"></div><div id="shareFallbackBox" class="card" style="display:none;margin-top:var(--space-4)"><label for="shareFallbackText"><strong>Copy this share text</strong></label><textarea id="shareFallbackText" readonly style="width:100%;min-height:120px;margin-top:var(--space-3);padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text)"></textarea><div class="helper" style="margin-top:var(--space-3)">If the native share sheet does not open, copy this text and paste it into Instagram, X, Telegram, or any messenger.</div></div>
 
             <form class="card email-capture-form" id="emailCaptureForm" action="https://api.web3forms.com/submit" method="POST">
               <input type="hidden" name="access_key" value="7c9b8409-0c4b-4563-a654-0bfa4287535c">
@@ -192,6 +192,16 @@
       {id:'mono',name:'Mono Chic',bg:['#f3f3f3','#d6d6d6'],ink:'#181818',accent:'#6a6a6a'}
     ];
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedSeed = urlParams.get('seed') || '';
+    const sharedStyle = urlParams.get('style') || '';
+    const sharedImage = urlParams.get('image') || '';
+    const sharedVibe = urlParams.get('vibe') || '';
+    const sharedEnergy = urlParams.get('energy') || '';
+    const sharedKeywords = urlParams.get('keywords') || '';
+    const sharedTheme = urlParams.get('theme') || '';
+    const sharedIndex = Number(urlParams.get('pick') || '0');
+
     const form = document.getElementById('builder');
     const englishName = document.getElementById('englishName');
     const keywordBox = document.getElementById('keywordBox');
@@ -210,6 +220,11 @@
     const themeSwatches = document.getElementById('themeSwatches');
     const downloadCardBtn = document.getElementById('downloadCardBtn');
     const refreshCardBtn = document.getElementById('refreshCardBtn');
+    const shareLinkBtn = document.getElementById('shareLinkBtn');
+    const shareStatus = document.getElementById('shareStatus');
+    const shareCopyText = document.getElementById('shareCopyText');
+    const shareFallbackBox = document.getElementById('shareFallbackBox');
+    const shareFallbackText = document.getElementById('shareFallbackText');
     const cardHeadline = document.getElementById('cardHeadline');
     const cardName = document.getElementById('cardName');
     const cardRoman = document.getElementById('cardRoman');
@@ -341,7 +356,84 @@
       ctx.fillStyle='rgba(0,0,0,0.08)'; roundRect(ctx,130,862,820,92,28); ctx.fill(); ctx.fillStyle=theme.ink; ctx.font='700 24px Inter'; ctx.fillText('Family name + exact 2-syllable given name',160,918);
       cardHeadline.textContent='Your Korean-style name'; cardName.textContent=item.hangulFull; cardRoman.textContent=item.romanFull; selectedNameField.value=item.hangulFull; selectedRomanField.value=item.romanFull;
     }
-    function generate(shuffle=false){ results = buildResults(shuffle); activeIndex = 0; renderRecommendations(); renderSelected(); renderShareCard(); }
+    function buildShareText(item){
+      return `My Korean name is ${item.hangulFull}! Try yours too: ${item.romanFull}`;
+    }
+    function getShareUrl(){
+      const params = new URLSearchParams();
+      params.set('seed', englishName.value.trim() || 'Olivia');
+      params.set('style', getSelected('style'));
+      params.set('image', getSelected('image'));
+      params.set('vibe', getSelected('vibe'));
+      params.set('energy', getSelected('energy'));
+      const keywords = (keywordBox.value || '').trim();
+      if (keywords) params.set('keywords', keywords);
+      params.set('theme', activeTheme);
+      params.set('pick', String(activeIndex));
+      const base = window.location.protocol === 'file:' ? window.location.href.split('?')[0].split('#')[0] : `${window.location.origin}${window.location.pathname}`;
+      return `${base}?${params.toString()}#share-card`;
+    }
+    function syncShareUi(){
+      const item = results[activeIndex];
+      if (!item) return;
+      const text = `${buildShareText(item)} You can get your own Korean-style name here.`;
+      shareCopyText.textContent = `Suggested share caption: “${text}”`;
+      shareLinkBtn.textContent = 'Share result link';
+      history.replaceState(null, '', getShareUrl());
+    }
+    function showShareFallback(payload, message){
+      shareFallbackBox.style.display = 'block';
+      shareFallbackText.value = payload;
+      shareFallbackText.focus();
+      shareFallbackText.select();
+      shareStatus.textContent = message;
+      shareStatus.className = 'status-message show status-success';
+    }
+    async function shareResult(){
+      const item = results[activeIndex];
+      if (!item) return;
+      const url = getShareUrl();
+      const text = `내 한국어 이름은 ${item.hangulFull}! 너도 해봐.`;
+      const payload = `${text}
+${url}`;
+      shareStatus.className = 'status-message';
+      shareFallbackBox.style.display = 'none';
+      shareFallbackText.value = '';
+      try {
+        if (navigator.share && window.location.protocol !== 'file:') {
+          await navigator.share({
+            title: 'Korean Name Studio',
+            text,
+            url
+          });
+          shareStatus.textContent = '공유 창이 열렸습니다.';
+          shareStatus.className = 'status-message show status-success';
+          return;
+        }
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+      }
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(payload);
+          shareStatus.textContent = '공유 문구와 링크가 복사되었습니다.';
+          shareStatus.className = 'status-message show status-success';
+          return;
+        }
+      } catch (error) {}
+      showShareFallback(payload, '이 환경에서는 네이티브 공유가 제한되어 복사용 텍스트 박스를 표시했습니다.');
+    }
+    function applySharedState(){
+      if (sharedSeed) englishName.value = sharedSeed;
+      if (sharedKeywords) keywordBox.value = sharedKeywords;
+      [['style', sharedStyle], ['image', sharedImage], ['vibe', sharedVibe], ['energy', sharedEnergy]].forEach(([name, value]) => {
+        if (!value) return;
+        const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (input) input.checked = true;
+      });
+      if (sharedTheme && themePresets.some(t => t.id === sharedTheme)) activeTheme = sharedTheme;
+    }
+    function generate(shuffle=false){ results = buildResults(shuffle); activeIndex = 0; if (!shuffle && Number.isInteger(sharedIndex) && sharedIndex >= 0 && sharedIndex < results.length) activeIndex = sharedIndex; renderRecommendations(); renderSelected(); renderShareCard(); syncShareUi(); }
     function setDownloadEnabled(enabled){
       downloadCardBtn.disabled = !enabled;
       downloadCardBtn.setAttribute('aria-disabled', String(!enabled));
@@ -406,11 +498,13 @@
     });
 
     englishName.value = randomSeed();
+    applySharedState();
     themeBtn.addEventListener('click',()=>{currentTheme=currentTheme==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',currentTheme);setThemeIcon();});
     generateBtn.addEventListener('click',()=>generate(false));
     shuffleBtn.addEventListener('click',()=>generate(true));
     downloadCardBtn.addEventListener('click',downloadCanvas);
-    refreshCardBtn.addEventListener('click',renderShareCard);
+    refreshCardBtn.addEventListener('click',()=>{ renderShareCard(); syncShareUi(); });
+    shareLinkBtn.addEventListener('click',shareResult);
     setDownloadEnabled(false);
     setThemeIcon(); renderThemeButtons(); generate(false);
   </script>
