@@ -128,7 +128,7 @@
           <section class="share-panel card">
             <div><span class="badge">Preview</span><h3 style="margin-top:var(--space-3)">Square social card</h3></div>
             <div class="share-canvas-wrap"><canvas id="shareCanvas" class="share-canvas" width="1080" height="1080" aria-label="Share card preview"></canvas></div>
-            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG (disabled)</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button><button class="btn btn-secondary" type="button" id="shareLinkBtn">Share result link</button></div><div id="shareStatus" class="status-message" aria-live="polite"></div><div class="helper" id="shareCopyText"></div><div id="shareFallbackBox" class="card" style="display:none;margin-top:var(--space-4)"><label for="shareFallbackText"><strong>Copy this share text</strong></label><textarea id="shareFallbackText" readonly style="width:100%;min-height:120px;margin-top:var(--space-3);padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text)"></textarea><div class="helper" style="margin-top:var(--space-3)">If the native share sheet does not open, copy this text and paste it into Instagram, X, Telegram, or any messenger.</div></div>
+            <div class="share-actions"><button class="btn btn-primary" type="button" id="downloadCardBtn" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed">Download PNG (disabled)</button><button class="btn btn-secondary" type="button" id="refreshCardBtn">Refresh card</button><button class="btn btn-secondary" type="button" id="shareLinkBtn">Share link</button></div><div id="shareStatus" class="status-message" aria-live="polite"></div><div class="helper" id="shareCopyText"></div><div id="shareFallbackBox" class="card" style="display:none;margin-top:var(--space-4)"><label for="shareFallbackText"><strong>Copy this share text</strong></label><textarea id="shareFallbackText" readonly style="width:100%;min-height:120px;margin-top:var(--space-3);padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text)"></textarea><div class="helper" style="margin-top:var(--space-3)">If the native share sheet does not open, copy this text and paste it into Instagram, X, Telegram, or any messenger.</div></div>
 
             <form class="card email-capture-form" id="emailCaptureForm" action="https://api.web3forms.com/submit" method="POST">
               <input type="hidden" name="access_key" value="7c9b8409-0c4b-4563-a654-0bfa4287535c">
@@ -378,7 +378,7 @@
       if (!item) return;
       const text = `${buildShareText(item)} You can get your own Korean-style name here.`;
       shareCopyText.textContent = `공유 문구 미리보기: “내 한국어 이름은 ${item.hangulFull}! 너도 해봐.”`;
-      shareLinkBtn.textContent = 'Share result link';
+      shareLinkBtn.textContent = 'Share link';
       history.replaceState(null, '', getShareUrl());
     }
     function showShareFallback(payload, message){
@@ -400,29 +400,14 @@ ${url}`;
       shareFallbackBox.style.display = 'none';
       shareFallbackText.value = '';
       try {
-        if (navigator.share && window.location.protocol !== 'file:') {
-          await navigator.share({
-            title: 'Korean Name Studio',
-            text,
-            url
-          });
-          shareStatus.textContent = '공유 창이 열렸습니다.';
-          shareStatus.className = 'status-message show status-success';
-          return;
-        }
-      } catch (error) {
-        if (error && error.name === 'AbortError') return;
-      }
-      try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(payload);
-          shareStatus.textContent = '공유 문구와 링크가 복사되었습니다.';
+          shareStatus.textContent = 'Share link copied. Paste it anywhere.';
           shareStatus.className = 'status-message show status-success';
           return;
         }
       } catch (error) {}
-      showShareFallback(payload, '이 환경에서는 네이티브 공유가 제한되어 복사용 텍스트 박스를 표시했습니다.');
-      alert('공유용 문구와 링크를 아래 박스에 표시했습니다. 복사해서 사용하세요.');
+      showShareFallback(payload, 'Share link is ready below. Copy and paste it anywhere.');
     }
     function applySharedState(){
       if (sharedSeed) englishName.value = sharedSeed;
