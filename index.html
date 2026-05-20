@@ -377,7 +377,7 @@
       const item = results[activeIndex];
       if (!item) return;
       const text = `${buildShareText(item)} You can get your own Korean-style name here.`;
-      shareCopyText.textContent = `Suggested share caption: “${text}”`;
+      shareCopyText.textContent = `공유 문구 미리보기: “내 한국어 이름은 ${item.hangulFull}! 너도 해봐.”`;
       shareLinkBtn.textContent = 'Share result link';
       history.replaceState(null, '', getShareUrl());
     }
@@ -422,6 +422,7 @@ ${url}`;
         }
       } catch (error) {}
       showShareFallback(payload, '이 환경에서는 네이티브 공유가 제한되어 복사용 텍스트 박스를 표시했습니다.');
+      alert('공유용 문구와 링크를 아래 박스에 표시했습니다. 복사해서 사용하세요.');
     }
     function applySharedState(){
       if (sharedSeed) englishName.value = sharedSeed;
